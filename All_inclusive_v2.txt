@@ -1,0 +1,359 @@
+
+tickers <- as.vector(read.csv("test.csv",header = TRUE))
+tickers <- as.vector(tickers[,1])
+
+
+## All functions first
+
+importFin <- function(id = "SPY", st.mth = "01", st.day = "1", st.year = "2011", ed.mth = "06", ed.day = "5", ed.year = "2013") {
+	part1url <- "http://ichart.finance.yahoo.com/table.csv?s="
+	part2url <- "&a="
+	part3url <- "&b="
+	part4url <- "&c="
+	part5url <- "&d="
+	part6url <- "&e="
+	part7url <- "&f="
+	part8url <- "&g=d&ignore=.csv"
+	fileurl <- paste0(part1url, id, part2url, st.mth, part3url, st.day, part4url, st.year, part5url, ed.mth, part6url, ed.day, part7url, ed.year, part8url)
+	dest <- paste0(id,".csv")
+	download.file(fileurl,destfile = dest)
+}
+
+## Ichi function
+ichi <- function(id = "SPY", rangeT = 9, rangeK=26, rangeB=52){
+	pickup <- paste0(id,".csv")
+	dest <- paste0(id,"rules.csv")
+	temp <- read.csv(pickup) ##temp is name of temp data frame
+	temp$ticker <- id
+	temp$adjopen <- (temp$Open / temp$Close)*temp$Adj.Close
+	temp$adjhigh <- (temp$High / temp$Close)*temp$Adj.Close
+	temp$adjlow <- (temp$Low / temp$Close)*temp$Adj.Close
+	temp <- temp[order(nrow(temp):1),]
+	###############################
+	
+	x <- nrow(temp) 
+	
+	###############################
+	
+	for (i in x:1){ 
+	a = i-(rangeT-1) 
+	if (i >= rangeT){ 
+	temp$tenkanmax[i] <- max(temp$adjhigh[a:i])
+	}
+	else { break }
+	}
+	for (i in x:1){
+	a = i-(rangeT-1)
+	if (i >= rangeT){
+	temp$tenkanmin[i] <- min(temp$adjlow[a:i])
+	}
+	else { break }
+	}
+	temp$tenkan = (temp$tenkanmax + temp$tenkanmin)/2
+	
+	##################################
+	
+	for (i in x:1){
+	a = i-(rangeK-1)
+	if (i >= rangeK){
+	temp$kijunmax[i] <- max(temp$adjhigh[a:i])
+	}
+	else { break }
+	}
+	for (i in x:1){
+	a = i-(rangeK-1)
+	if (i >= rangeK){
+	temp$kijunmin[i] <- min(temp$adjlow[a:i])
+	}
+	else { break }
+	}
+	temp$kijun <- (temp$kijunmax + temp$kijunmin)/2
+	temp$spanA <- (temp$kijun + temp$tenkan)/2
+	
+	#############################################
+	
+	for (i in x:1){
+	a = i-(rangeB-1)
+	if (i >= rangeB){
+	temp$spanBmax[i] <- max(temp$adjhigh[a:i])
+	}
+	else { break }
+	}
+	for (i in x:1){
+	a = i-(rangeB-1)
+	if (i >= rangeB){
+	temp$spanBmin[i] <- min(temp$adjlow[a:i])
+	}
+	else { break }
+	}
+	temp$spanB <- (temp$spanBmax + temp$spanBmin)/2
+	
+	############################################
+	
+	######## TK Rule ###########################
+	
+	temp$tkrule <- NA 
+	
+	for (i in 1:x){
+	if (is.na(temp$tenkan[i]) ==TRUE | is.na(temp$kijun[i]) == TRUE) {temp$tkrule[i] <- NA}
+	else if (temp$tenkan[i] > temp$kijun[i]){temp$tkrule[i] <- c("bullish")}
+	else {temp$tkrule[i] <- c("bearish")}
+	}
+	
+	######## K cross Rule #######################	
+	
+	temp$kcross <- NA
+	c = (rangeK + rangeB )-1 ##used to be hardcoded for value 77
+	l = rangeK-1
+	for (i in c:x) {
+	if(temp$Adj.Close[i] > max(temp$spanA[i-l], temp$spanB[i-l])) {temp$kcross[i] <- c("bullish")}
+	else if (temp$Adj.Close[i] < min(temp$spanA[i-l], temp$spanB[i-l])) {temp$kcross[i] <- c("bearish")}
+	else {temp$kcross[i] <- c("neutral")}
+	}
+	
+	######## Chikou cross Rule ##################	
+	
+	temp$Chikao <- NA
+	
+	for (i in x:1){
+	a = i-(rangeK-1)
+	if (i >=rangeK){
+	if (temp$Adj.Close[i] > temp$Adj.Close[a]) {temp$Chikao[i] <- c("bullish")}
+	else {temp$Chikao[i] <- c("bearish")}
+	}	
+	}
+	
+	######## Kijun Price Rule ####################
+	
+	temp$kijunprice <- NA 
+	
+	for (i in x:1){
+	if (i >=rangeK){
+	if (temp$Adj.Close[i] > temp$kijun[i]){temp$kijunprice[i] <- c("bullish")}
+	else {temp$kijunprice[i] <- c("bearish")}
+	}
+	}
+	
+	######## Cloud type Rule ######################
+	
+	temp$cloudtype <- NA
+	
+	b = (rangeK + rangeB )-1 ##used to be hardcoded for value 77
+	l = rangeK-1
+	for (i in b:x) {
+	if(temp$spanA[i-l] > temp$spanB[i-l]) {temp$cloudtype[i] <- c("bullish")}
+	else {temp$cloudtype[i] <- c("bearish")}
+	}
+	
+	######## M3 and M8 Signal #########################
+	
+	temp$M3comborule <- NA
+	
+	e = (rangeK + rangeB )-1 ##used to be hardcoded for value 77
+	
+	for (i in e:x) {
+	tempvec <- as.vector(temp$tkrule[i])
+	if(temp$tkrule[i] == temp$Chikao[i]) {temp$M3comborule[i] <- tempvec}
+	else {temp$M3comborule[i] <- c("neutral")}
+	}
+	
+	
+	temp$M3signal <- NA
+
+	for (i in e:x) {
+	tempvec <- as.vector(temp$M3comborule[i])
+	if(temp$M3comborule[i] == temp$kcross[i]) {temp$M3signal[i] <- tempvec}
+	else {temp$M3signal[i] <- c("neutral")}
+	}
+	
+	temp$M8signal <- NA
+
+	for (i in e:x) {
+	tempveccombo <- as.vector(temp$M3comborule[i])
+	if (tempveccombo == c("bullish")) {temp$M8signal[i] <- c("bullish")}
+	else if(temp$M3comborule[i] == temp$kcross[i]) {temp$M8signal[i] <- tempveccombo}
+	else {temp$M8signal[i] <- c("neutral")}
+	}
+	
+	temp$M3signalv2 <- NA
+	
+	for (i in e:x) {
+	if(temp$M3signal[i] != c("neutral")) {temp$M3signalv2[i] <- temp$M3signal[i]}
+	else {temp$M3signalv2[i] <- temp$M3signalv2[i-1]}
+	}	
+	
+	temp$M8signalv2 <- NA
+	
+	for (i in e:x) {
+	if(temp$M8signal[i] != c("neutral")) {temp$M8signalv2[i] <- temp$M8signal[i]}
+	else {temp$M8signalv2[i] <- temp$M8signalv2[i-1]}
+	}	
+	
+	
+	############ write file to destination ########
+	
+	write.csv(temp, file = dest)
+}
+
+extractM3 <- function(id) {
+pickup <- paste0(id,"rules.csv")
+temp <- read.csv(pickup)
+today <- nrow(temp)
+yesterday = today - 1
+if(temp[today,c("M3signalv2")] != temp[yesterday,c("M3signalv2")] & as.vector(temp[yesterday,c("M3signalv2")]) != c("neutral")) {
+tempm3 <- temp[today,c("Date","ticker","M3signalv2")]
+}
+}
+
+extractM8 <- function(id) {
+pickup <- paste0(id,"rules.csv")
+temp <- read.csv(pickup)
+today <- nrow(temp)
+yesterday = today - 1
+if(temp[today,c("M8signalv2")] != temp[yesterday,c("M8signalv2")] & as.vector(temp[yesterday,c("M8signalv2")]) != c("neutral")) {
+tempm8 <- temp[today,c("Date","ticker","M8signalv2")]
+}
+}
+
+
+############### run script for extraction and manipulation ##################
+
+d <- Sys.Date() 
+day <- as.character(as.numeric(format(d, format = "%d")))
+year <- as.character(as.numeric(format(d, format = "%Y")))
+if (length(as.character(as.numeric(format(d, format = "%m")))) == 1) { 
+mth <- paste0("0",as.character(as.numeric(format(d, format = "%m"))))
+} else {
+mth <- as.character(as.numeric(format(d, format = "%m")))
+}
+
+
+t1 <- read.csv("test.csv")
+l <- length(tickers)
+for (i in 1:l) {
+sym <- as.vector(t1[i,"sym"])
+T <- t1[i,"rgt"]
+K <- t1[i,"rgk"]
+B <- 2*K
+importFin(sym,ed.mth = mth, ed.day = day, ed.year = year)
+ichi(sym, rangeT=T, rangeK=K, rangeB=B)   ###rangeT = 9, rangeK=26, rangeB=52
+}
+
+consolidatedM3 <- data.frame(Date = 0, ticker = 0, M3signalv2 = 0)
+consolidatedM8 <- data.frame(Date = 0, ticker = 0, M8signalv2 = 0)
+
+for(sym in tickers) {
+x <- extractM3(sym)
+consolidatedM3 <- rbind(consolidatedM3 , x)
+}
+
+for(sym in tickers) {
+x <- extractM8(sym)
+consolidatedM8 <- rbind(consolidatedM8 , x)
+}
+
+write.csv(consolidatedM3, file = "consolidatedM3.csv")
+write.csv(consolidatedM8, file = "consolidatedM8.csv")
+
+##### write to consolidatedAnalytics file
+a1 <- read.csv("consolidatedM8.csv")
+c1 <- read.csv("consolidatedM3.csv")
+
+a1 <- a1[,2:4]
+c1 <- c1[,2:4]
+
+x1 <- merge(a1,c1, all=TRUE)
+y1 <- nrow(x1)
+x2 <- x1[2:y1,]
+tickers <- as.vector(unique(x2[,2]))
+
+
+
+consolidatedAnalytics <- 0
+M3sum <- 0
+m3len <- 0
+M8sum <- 0
+m8len <- 0
+ticker <- c("0")
+
+for(sym in tickers) {
+temp <- read.csv(paste0(sym,"rules.csv"))
+
+
+temp <- temp[,c("Adj.Close", "M3signal", "M8signal")]
+M3vector <- as.vector(0)
+m3trades <- as.vector(0)
+M8vector <- as.vector(0)
+m8trades <- as.vector(0)
+temp$M3run <- NA
+temp$M8run <- NA
+a = 77
+x = nrow(temp)
+
+for (i in a:x) {
+b = i-1
+if (as.vector(temp$M8signal[i]) == c("bullish")) { 
+	temp$M8run[i] <- c("X") } else if (as.vector(temp$M8signal[i]) == c("neutral")) {
+	temp$M8run[i] <- temp$M8run[b] } else {temp$M8run[i] <- c(0)}
+	}
+	
+	
+	
+for (i in a:x) {
+b = i-1
+if (as.vector(temp$M3signal[i]) == c("bullish")) { 
+temp$M3run[i] <- c("X") } else if (as.vector(temp$M3signal[i]) == c("neutral")) {
+temp$M3run[i] <- temp$M3run[b] } else {temp$M3run[i] <- c(0)}
+}
+
+
+for (i in a:x) {
+if (i < x) {
+j = i-1
+	if (is.na(temp$M3run[i]) == TRUE) {M3vector <- M3vector}
+	else if (as.vector(temp$M3run[i]) == "X" & (as.vector(temp$M3run[j]) == "0" | is.na(temp$M3run[j])) == TRUE) {
+	M3vector <- append(M3vector, as.vector(-(temp$Adj.Close[i])))
+	} else if (as.vector(temp$M3run[i]) == "0" & is.na(temp$M3run[j]) == TRUE) {M3vector <- M3vector}
+	else if (as.vector(temp$M3run[i]) == "0" & as.vector(temp$M3run[j]) == "X") {
+	M3vector <- append(M3vector, as.vector(temp$Adj.Close[i]))
+	} 
+	}
+	}
+
+	
+	
+for (i in a:x) {
+if (i < x) {
+j = i-1
+	if (is.na(temp$M8run[i]) == TRUE) {M8vector <- M8vector}
+	else if (as.vector(temp$M8run[i]) == "X" & (as.vector(temp$M8run[j]) == "0" | is.na(temp$M8run[j])) == TRUE) {
+	M8vector <- append(M8vector, as.vector(-(temp$Adj.Close[i])))
+	} else if (as.vector(temp$M8run[i]) == "0" & is.na(temp$M8run[j]) == TRUE) {M8vector <- M8vector}
+	else if (as.vector(temp$M8run[i]) == "0" & as.vector(temp$M8run[j]) == "X") {
+	M8vector <- append(M8vector, as.vector(temp$Adj.Close[i]))
+	}
+	}
+	}	
+
+if(M3vector[2] > 0){M3vector <- M3vector[-2]}	
+if(M3vector[length(M3vector)] < 0) {M3vector <- M3vector[-length(M3vector)]}
+m3trades <- length(M3vector)
+if(M8vector[2] > 0){M8vector <- M8vector[-2]}	
+if(M8vector[length(M8vector)] < 0) {M8vector <- M8vector[-length(M8vector)]}
+m8trades <- length(M8vector)
+
+
+M3sum <- append(M3sum, sum(M3vector))
+M8sum <- append(M8sum, sum(M8vector))
+m3len <- append(m3len, m3trades)
+m8len <- append(m8len, m8trades)
+ticker <- append(ticker, sym)
+
+}
+
+b1 <- cbind(ticker, M3sum, m3len, M8sum, m8len)
+consolidatedAnalytics <- merge(x1,b1, by = c("ticker", "ticker"))
+
+write.csv(consolidatedAnalytics, file = "consolidatedAnalytics.csv")
+
+

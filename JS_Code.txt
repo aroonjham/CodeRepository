@@ -1,0 +1,384 @@
+// Starting with Javascript
+
+"Aroon".length // returns length of "aroon"
+"Batman".substring(0,3); //returns substring bat
+"laptop".substring(3,6); //returns substring top
+
+confirm('hello world. Click Ok to continue');
+confirm('namaste world. Click Ok to continue'); // "confirm" returns dialog box
+
+prompt("What is your name?"); // prompts user for input
+
+console.log("Hello") //console.log() will take whatever is inside the parentheses and log it to the console below your code
+
+/* Javascript list of boolean operators
+//List of comparison operators:
+
+  > Greater than
+  < Less than
+  <= Less than or equal to
+  >= Greater than or equal to
+  === Equal to
+  !== Not equal to
+*/
+
+// FIRST CONDITIONAL STATEMENT USING IF/ELSE
+
+//example 1
+if (7*4 > 100 ) 
+{
+    console.log("Let's go down the first road!");
+}
+else 
+{
+    console.log("the other path is better");
+}
+
+//example 2
+
+if (12 / 4 === "Ari".length) {
+    confirm("Will this run the first block?");
+} 
+else 
+{
+    confirm("Or the second block?");
+}
+
+
+// WONDERFUL WORLD OF VARIABLES
+
+var myName = "Aroon"; // use var to declare variables
+var myAge = 30;
+var isOdd = true;
+console.log(myAge); // will print 30
+console.log(myName.length); // will return 5
+
+//Lets get a little more serious with a stupid little game that really deserves 0 stars ... but what the heck!!!
+
+confirm("Are you ready to play?")
+
+var age = prompt("what's your age");
+
+if(age < 13)
+{
+    console.log("You may be a little young, but that's ok");
+}
+else
+{
+    console.log("have fun");
+}
+
+console.log("You are at a Justin Bieber concert, and you hear this lyric 'Lace my shoes off, start racing.'");
+console.log("Suddenly, Bieber stops and says, 'Who wants to race me?'");
+var userAnswer = prompt("Do you want to race Bieber on stage?");
+
+if (userAnswer === "yes")
+{
+    console.log("You and Bieber start racing. It's neck and neck! You win by a shoelace!");
+}
+else
+{
+    console.log("Oh no! Bieber shakes his head and sings 'I set a pace, so I can race without pacing.'");
+}
+
+var feedback = prompt("rate my game please")
+
+if (feedback > 8)
+{
+    console.log("Thank you! We should race at the next concert!")
+}
+else
+{
+    console.log("I'll keep practicing coding and racing.")
+}
+
+
+// AND NOW ITS TIME FOR FUNCTIONS IN JAVASCRIPT. THE HOLY GRAIL OF PROGRAMMING
+
+// a simple function
+//example 1
+var dividebythree = function(number) {
+	var val = number/3;
+	console.log(val);
+	};
+
+dividebythree(6) // should return 2
+
+//example 2
+var greeting = function (name) {
+    console.log("Great to see you," + " " + name);//We can join strings together using the plus sign (+)
+};
+
+greeting("Aroon") // returns Great to see you, Aroon
+
+//example 3 uses return
+
+var timesTwo = function(number) {
+    return number * 2; //he return keyword simply gives the programmer back the value that comes out of the function
+};
+
+var newNumber = timesTwo(20)
+console.log(newNumber); // prints 40 to the console
+
+//example 4
+
+var perimeterBox = function(l,w){
+  return (2*l)+(2*w)  
+};
+
+console.log(perimeterBox(6,12))
+
+// example 5
+
+var isEven = function(number) {
+  // If you call isNaN on something, it checks to see if that thing is not a number
+  if (isNaN(number)){
+      return "not a number";
+  }
+  
+  else if (number % 2 === 0){
+      return true;
+  }
+  
+  else {
+      return false;
+  }
+};
+
+// Game of Rock paper and scissors. My first example of using conditional if/else and functions.
+
+var userChoice = prompt("Do you choose rock, paper or scissors?");
+
+var computerChoice = Math.random(); //Math.random() returns a value between 0 and 1
+
+if (computerChoice < 0.34) {
+	computerChoice = "rock";
+} else if(computerChoice <= 0.67) {
+	computerChoice = "paper";
+} else {
+	computerChoice = "scissors";
+	} 
+	
+console.log("Computer: " + computerChoice);
+
+var compare = function(choice1,choice2){
+    if (choice1 === choice2) {
+        return "The result is a tie!"
+    }
+    else if (choice1 === "rock") 
+    {
+        if (choice2 === "scissors")
+        {
+            return "rock wins"
+        }
+        else {
+            return "paper wins"
+        }
+    }
+    else if (choice1 === "paper")
+    {
+        if (choice2 === "rock"){
+            return "paper wins"
+        }
+        else {
+            return "scissors win"
+        }
+    }
+    else {
+        if (choice2 === "paper"){
+            return "scissors wins"
+        }
+        else {
+            return "rock wins"
+        }
+    }
+};
+
+compare(userChoice,computerChoice)
+
+
+// FOR LOOPS. GO ON AND ON AND ON AND ON AND ON AND ON AND ON AND ON AND ON 
+
+for (var i = 0; i < 36; i++) {
+	console.log(i);
+} // i++ is the same as i = i+1
+
+/*
+A  more efficient way to code to increment up by 1 is to write i++.
+b. We decrement down by 1 by writing i--.
+c. We can increment up by any value by writing i += x, where x is how much we want to increment up by. e.g., i += 3 counts up by 3s.
+d. We can decrement down by any value by writing i -= x
+*/
+
+// A variable assigned just one number. So boring. Enter the fun world of Arrays. 2 is a company, more than 2 is a party
+
+var junkData = ["Eddie Murphy", 49, "peanuts", 31];
+
+console.log(junkData[3]) // returns the 4th value '31' from the array. A lot like python listStyleType
+
+// looping through an array
+
+var cities = ["Melbourne", "Amman", "Helsinki", "NYC"];
+
+for (var i = 0; i < cities.length; i++) {
+    console.log("I would like to visit " + cities[i]);
+}
+
+// example of a fairly complex conditional statements
+// find name "Aroon" in a text
+
+var text = "Hello Aroon, its so good to meet you. You know \
+Aroon that the last time I saw you was in Austin. Wasnt it \
+wonderful then Aroon?"; 
+
+var myName = "Aroon";
+
+var hits = []; // empty array hits.length will return 0
+
+for (var i=0; i < text.length; i++){
+    if(text[i]==="A"){
+       for (var c=i; c < myName.length+i; c++){
+       hits.push(text[c]); //push() method that adds the thing between parentheses to the end of the array
+       } 
+    }
+}
+
+if (hits.length === 0){
+    console.log("Your name wasn't found!")
+}
+else {
+    console.log(hits)
+}
+
+// this whole example above can be done more efficiently using the code below
+
+var hits2 = text.match(/Aroon/g);
+
+if (hits2.length === 0){
+    "cant find your name"
+}
+else {
+    console.log(hits2)
+}
+
+// AND WHILE WE ARE WAITING, DOING A LOOP IS POINTLESS CAUSE WE DONT KNOW HOW MUCH WHILE WILL THE WHILE BE
+
+// the while conditional statement
+
+//example 1. keep flipping till we get damn tails!!!
+
+var coinFace = Math.floor(Math.random() * 2);
+
+while(coinFace === 0){
+	console.log("Heads! Flipping again...");
+	var coinFace = Math.floor(Math.random() * 2);
+}
+console.log("Tails! Done flipping.");
+
+//example 2. Interesting that we dont set variable "understand" to any value in the while loop
+
+understand = true;
+
+while(understand){
+	console.log("I'm learning while loops!");
+	understand = false //must add this to prevent the browser from crashing
+}
+
+//example 3: While looping, set your condition outside the loop.
+
+var count = 0 //if you set counter inside the function, it will keep resetting to 0
+var loop = function(){
+    	while(count < 3){
+		console.log("I'm looping!");
+		count++
+	}
+};
+
+loop();
+
+// DO-WHILE ... A TWIST ON WHILE
+
+//example1
+var loopCondition = false;
+
+do {
+	console.log("I'm gonna stop looping 'cause my condition is " + loopCondition + "!");	
+} while (loopCondition);
+
+//example 2: with a hint of function
+
+var i = 1
+var getToDaChoppa = function(){
+  do{
+      console.log("Aroon is "+i)
+      i++
+  } while (i<10);
+  
+};
+
+getToDaChoppa();
+
+
+//grand example 3
+
+var slaying = true;
+var youHit = Math.floor(Math.random() * 2); // returns 1 or 0 interpreted by JS as T or F
+var damageThisRound = Math.floor(Math.random() * 5 + 1);
+var totalDamage = 0;
+
+while (slaying) {
+  if (youHit) {
+    console.log("You hit the dragon and did " + damageThisRound + " damage!");
+    totalDamage += damageThisRound;
+    
+    if (totalDamage >= 4) {
+      console.log("You did it! You slew the dragon!");
+      slaying = false;
+    } else {
+      youHit = Math.floor(Math.random() * 2);
+    }
+  } else {
+    console.log("The dragon burninates you! You're toast.");
+    slaying = false;
+  }
+}
+
+//IF YOU HAVE TOO MANY IF ELSE, ELSE IF, AND MORE ELSE IF ... GO SIMPLE AND GET YOURSELF A SWITCH
+
+var lunch = prompt("What do you want for lunch?","Type your lunch choice here"); // check out the prompt command ... very cool
+lunch = lunch.toLowerCase() //convert all to lower case
+switch(lunch){
+  case 'sandwich':
+    console.log("Sure thing! One sandwich, coming up.");
+    break;
+  case 'soup':
+    console.log("Got it! Tomato's my favorite.");
+    break;
+  case 'salad':
+    console.log("Sounds good! How about a caesar salad?");
+    break;
+  case 'pie':
+    console.log("Pie's not a meal!");
+    break;
+  default:
+    console.log("Huh! I'm not sure what " + lunch + " is. How does a sandwich sound?");
+}
+
+//example 2
+
+var game = prompt("whats ur fav game","enter name here");
+
+switch(game){
+    case 'soccer':
+        console.log("lots a legs");
+        break;
+    case 'football':
+        console.log("lots a hurt");
+        break;
+    case 'tennis':
+        console.log("like to volley")
+        break;
+    default:
+        console.log("is that a game?")
+}
+

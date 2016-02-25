@@ -1,0 +1,111 @@
+## Be sure to define Ichi function first
+
+
+############################################################
+
+tickers <- c("SPY", "IWM")
+##	rangek <- c(10:25)
+##	ranget <- c(5:9) 
+##	M3sum <- 0
+##	M8sum <- 0
+##	rgt <- 0
+##	rgk <- 0
+
+############################################################
+
+for(sym in tickers) {
+
+	rangek <- c(10:25)
+	ranget <- c(5:9) 
+	M3sum <- 0
+	m3len <- 0
+	M8sum <- 0
+	m8len <- 0
+	rgt <- 0
+	rgk <- 0
+	desto <- paste0(sym,"optim.csv")
+
+	for(t in ranget) {
+		for (k in rangek) {
+			b = (k + k)
+			ichi(id = sym, rangeT = t, rangeK=k, rangeB=b)
+			
+			temp <- read.csv(paste0(sym,"rules.csv"))
+
+			temp <- temp[,c("Adj.Close", "M3signal", "M8signal")]
+			M3vector <- as.vector(0)
+			m3trades <- as.vector(0)
+			M8vector <- as.vector(0)
+			m8trades <- as.vector(0)
+			temp$M3run <- NA
+			temp$M8run <- NA
+			a = 77
+			x = nrow(temp)
+
+			for (i in a:x) {
+			b = i-1
+			if (as.vector(temp$M8signal[i]) == c("bullish")) { 
+				temp$M8run[i] <- c("X") } else if (as.vector(temp$M8signal[i]) == c("neutral")) {
+				temp$M8run[i] <- temp$M8run[b] } else {temp$M8run[i] <- c(0)}
+				}
+				
+				
+				
+			for (i in a:x) {
+			b = i-1
+			if (as.vector(temp$M3signal[i]) == c("bullish")) { 
+			temp$M3run[i] <- c("X") } else if (as.vector(temp$M3signal[i]) == c("neutral")) {
+			temp$M3run[i] <- temp$M3run[b] } else {temp$M3run[i] <- c(0)}
+			}
+
+
+			for (i in a:x) {
+			if (i < x) {
+			j = i-1
+				if (is.na(temp$M3run[i]) == TRUE) {M3vector <- M3vector}
+				else if (as.vector(temp$M3run[i]) == "X" & (as.vector(temp$M3run[j]) == "0" | is.na(temp$M3run[j])) == TRUE) {
+				M3vector <- append(M3vector, as.vector(-(temp$Adj.Close[i])))
+				} else if (as.vector(temp$M3run[i]) == "0" & is.na(temp$M3run[j]) == TRUE) {M3vector <- M3vector}
+				else if (as.vector(temp$M3run[i]) == "0" & as.vector(temp$M3run[j]) == "X") {
+				M3vector <- append(M3vector, as.vector(temp$Adj.Close[i]))
+				} 
+				}
+				}
+
+				
+				
+			for (i in a:x) {
+			if (i < x) {
+			j = i-1
+				if (is.na(temp$M8run[i]) == TRUE) {M8vector <- M8vector}
+				else if (as.vector(temp$M8run[i]) == "X" & (as.vector(temp$M8run[j]) == "0" | is.na(temp$M8run[j])) == TRUE) {
+				M8vector <- append(M8vector, as.vector(-(temp$Adj.Close[i])))
+				} else if (as.vector(temp$M8run[i]) == "0" & is.na(temp$M8run[j]) == TRUE) {M8vector <- M8vector}
+				else if (as.vector(temp$M8run[i]) == "0" & as.vector(temp$M8run[j]) == "X") {
+				M8vector <- append(M8vector, as.vector(temp$Adj.Close[i]))
+				}
+				}
+				}	
+
+			if(M3vector[2] > 0){M3vector <- M3vector[-2]}	
+			if(M3vector[length(M3vector)] < 0) {M3vector <- M3vector[-length(M3vector)]}
+			m3trades <- length(M3vector)
+			if(M8vector[2] > 0){M8vector <- M8vector[-2]}	
+			if(M8vector[length(M8vector)] < 0) {M8vector <- M8vector[-length(M8vector)]}
+			m8trades <- length(M8vector)
+
+			M3sum <- append(M3sum, sum(M3vector))
+			m3len <- append(m3len, m3trades)
+			M8sum <- append(M8sum, sum(M8vector))
+			m8len <- append(m8len, m8trades)
+			rgt <- append(rgt, t)
+			rgk <- append(rgk, k)
+			
+			df <- cbind(M3sum, m3len, M8sum, m8len, rgt, rgk)				
+			write.csv(df, file = desto)			
+			
+			}
+			}
+			}
+					
+	############################################################

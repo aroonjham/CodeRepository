@@ -1,0 +1,30 @@
+m3sig <- vector("character")
+m8sig <- vector("character")
+ticker <- vector("character")
+date <- vector("character")
+same <- vector("logical")
+
+
+tickers <- as.vector(read.csv("test.csv",header = TRUE))
+tickers <- as.vector(tickers[,1])
+
+for(sym in tickers) {
+	file2read <- read.csv(paste0(sym,"rules.csv"))
+	r <- nrow(file2read)
+	c <- ncol(file2read)
+	m8 <- as.character(file2read[r,c])
+	m3 <- as.character(file2read[r,c-1])
+	dte <- as.character(file2read[r,2])
+	sme <- m8==m3
+	
+	ticker <- append(ticker, sym)
+	m3sig <- append(m3sig, m3)
+	m8sig <- append(m8sig, m8)
+	date <- append(date, dte)
+	same <- append(same, sme)
+	}
+	
+
+op <- data.frame(date = date, ticker = ticker, m3sig = m3sig, m8sig = m8sig, same = same)
+
+write.csv(op, file = "all_syms.csv")
