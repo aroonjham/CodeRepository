@@ -382,3 +382,93 @@ switch(game){
         console.log("is that a game?")
 }
 
+//example 3
+
+var user = prompt("Hello and welcome. What's your name?","enter name here").toUpperCase();
+
+switch(user){
+    case 'AROON':
+        var feeling = prompt("Are you feeling great today?").toUpperCase();
+        var weather = prompt("Is the weather great today?").toUpperCase();
+        if(feeling === "YES" || weather === "YES"){
+            console.log("Its great to see you master");
+        }
+        else {
+            console.log("Have some soup master")
+        }
+        break;
+    case 'NIHARIKA':
+        var feeling = prompt("Are you feeling great today?").toUpperCase();
+        var weather = prompt("Is the weather great today?").toUpperCase();
+        if(feeling === "YES" || weather === "YES"){
+            console.log("Its great to see you princess");
+        }
+        else {
+            console.log("Have some chicken nuggets princess")
+        }
+        break;
+    case 'MOMMY':
+        var feeling = prompt("Are you feeling great today?").toUpperCase();
+        var weather = prompt("Is the weather great today?").toUpperCase();
+        if(feeling === "YES" && weather === "YES"){
+            console.log("Its great to see you prime minister");
+        }
+        else {
+            console.log("I am sorry prime minister")
+        }
+        break;
+    default:
+    console.log("Welcome stranger " + user)
+}
+
+/* boolean operators
+&& - and
+|| - or
+! - not
+*/
+
+//example 1 of boolean
+
+var iLoveJavaScript = true;
+var iLoveLearning = true;
+
+if(iLoveJavaScript && iLoveLearning) {
+  // if iLoveJavaScript AND iLoveLearning:
+  console.log("Awesome! Let's keep learning!");
+} else if(!(iLoveJavaScript || iLoveLearning)) {
+  // if NOT iLoveJavaScript OR iLoveLearning:
+  console.log("Let's see if we can change your mind.");
+} else {
+  console.log("You only like one but not the other? We'll work on it.");
+}
+
+//example 2 showing the use of NOT
+
+var programming = false;
+
+var happy = function() {
+  if(!programming){
+      return true;
+  }
+  else {
+      return false;
+  }
+};
+
+//ARRAYS AND OBJECTS
+
+var myArray = [27,true,"Aroon"] //heterogenous array
+var newArray = [["name","place","thing"],["Aroon","Austin","Eraser"],["Karish","Mumbai","Pencil"]] // array of arrays
+var jagged = [["name","place","thing"],["Aroon","Austin"],["Karish","Mumbai","Pencil"]] // jagged array
+
+// objects in action. Objects are like dictionaries in python. Key-value pairs
+
+var phonebookEntry = {}; //empty object
+
+phonebookEntry.name = 'Oxnard Montalvo'; //adding property .name to the object
+phonebookEntry.number = '(555) 555-5555';
+phonebookEntry.phone = function() {
+  console.log('Calling ' + this.name + ' at ' + this.number + '...');
+};
+
+phonebookEntry.phone();
