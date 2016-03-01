@@ -461,8 +461,27 @@ var myArray = [27,true,"Aroon"] //heterogenous array
 var newArray = [["name","place","thing"],["Aroon","Austin","Eraser"],["Karish","Mumbai","Pencil"]] // array of arrays
 var jagged = [["name","place","thing"],["Aroon","Austin"],["Karish","Mumbai","Pencil"]] // jagged array
 
+
 // objects in action. Objects are like dictionaries in python. Key-value pairs
 
+//example 1: various ways to create an object
+
+//method 1 using a constructor
+var bob = new Object();
+bob.name = "Bob Smith";
+bob.age = 30;
+
+//method 2 using curly brackets
+var susan1 = {
+  name: "Susan Jordan",
+  age: 24
+};
+
+var susan2 = new Object();
+susan2.name = "Susan Jordan";
+susan2.age = 24;
+
+//example 2 illustrates methods and properties
 var phonebookEntry = {}; //empty object
 
 phonebookEntry.name = 'Oxnard Montalvo'; //adding property .name to the object
@@ -471,4 +490,379 @@ phonebookEntry.phone = function() {
   console.log('Calling ' + this.name + ' at ' + this.number + '...');
 };
 
-phonebookEntry.phone();
+phonebookEntry.phone(); //accesses the "method called phone" of phonebookEntry object
+phonebookEntry.number // accesses the "property called number" of phonebookEntry object
+
+// so we have learnt strings, numbers, objects and arrays. Lets learn about 'typeof'
+
+var anObj = { job: "I'm an object!" };
+var aNumber = 42;
+var aString = "I'm a string!";
+var junkData = ["Eddie Murphy", 49, "peanuts", 31];
+
+console.log( typeof anObj ); // should print "object"
+console.log( typeof aNumber ); // should print "number"
+console.log( typeof aString ); // should print "string"
+console.log( typeof junkData); // should print "object"
+
+// objects in an array
+
+var myObj = {
+    city: 'Austin',
+    age: 24,
+}
+var myArray = [24,true,"aroon",myObj]
+
+// array in an object
+
+var myObject = {
+  name: 'Eduardo',
+  type: 'Most excellent',
+  interests: ['Coding','Gaming'],
+  };
+  
+ // objects in objects
+
+var friends = {};
+friends.bill = {
+  firstName: "Bill",
+  lastName: "Gates",
+  number: "(206) 555-5555",
+  address: ['One Microsoft Way','Redmond','WA','98052']
+};
+friends.steve = {
+  firstName: "Steve",
+  lastName: "Jobs",
+  number: "(408) 555-5555",
+  address: ['1 Infinite Loop','Cupertino','CA','95014']
+};
+
+// the code below is a great example on how to extract names of object properties. (think like extracting name of the key from a key-value pair).
+var list = function(obj) {
+  for(var prop in obj) {
+    console.log(prop);
+  }
+};
+// the code below is a great example on how to extract properties from objects. (think like extracting values from keys.
+var search = function(name) {
+  for(var prop in friends) {
+    if(friends[prop].firstName === name) {
+      console.log(friends[prop]);
+      return friends[prop];
+    }
+  }
+};
+
+list(friends);
+search("Steve"); 
+
+//methods in objects
+
+//example 1
+var bob = new Object();
+bob.name = "Bob Smith";
+bob.age = 30;
+
+bob.setAge = function (newAge){
+  bob.age = newAge;
+};
+
+bob.setAge(40);
+
+bob.setAge(20) // bob's feeling old.  Use our method to set bob's age to 20
+
+//example 2 ... uses some date methods 
+
+var bob = new Object();
+bob.age = 17;
+
+bob.setAge = function (newAge){
+  bob.age = newAge;
+};
+
+bob.getYearOfBirth = function () {
+  return new Date().getFullYear() - bob.age; //new Date() gets current date. getFullYear() extracts YYYY
+};
+console.log(bob.getYearOfBirth());
+/* other date methods
+.getMonth()+1 ... gets month. Jan is 0, therefore +1
+.getDate() ... gets the day */
+
+//example 3 ... use of 'this' keyword
+
+// lets first establish a function using keyword 'this'
+var setAge = function (newAge) {
+  this.age = newAge;
+};
+// now lets make an object
+var bob = new Object();
+bob.age = 30;
+bob.setAge = setAge; // here, we create a method for bob that uses function setAge. The use of 'this' allows any object (bob in this case) to use the function
+
+bob.setAge(50); // calls setAge method for bob object. setAge method for object is linked to setAge function. 
+
+// objects by default have no properties
+// YOU CAN CREATE YOUR CUSTOM OBJECT BY USING CUSTOM CONSTRUCTORS
+
+//example of creating a person object
+
+function Person(name,age) {
+  this.name = name;
+  this.age = age;
+  this.species = "Homo Sapiens";
+}
+
+var bob = new Person("Bob Smith", 30);
+var susan = new Person("Susan Jordan", 25);
+var george = new Person("George Washington",275)
+
+//another example
+
+function Rectangle(height, width) {
+  this.height = height;
+  this.width = width;
+  this.calcArea = function() {
+      return this.height * this.width;
+  };
+  this.calcPerimeter = function(){
+      return this.height * 2 + this.width * 2;
+  };
+  
+}
+
+var rex = new Rectangle(7,3);
+var area = rex.calcArea();
+var perimeter = rex.calcPerimeter();
+
+console.log(area, perimeter)
+
+//another example now using arrays
+
+function Person (name, age) {
+    this.name = name;
+    this.age = age;
+}
+
+// Now we can make an array of people
+var family = new Array();
+family[0] = new Person("alice", 40);
+family[1] = new Person("bob", 42);
+family[2] = new Person("michelle", 8);
+family[3] = new Person("timmy",6);
+
+// and using a loop extract names and ages of people in the family array surgically
+
+for (i in family){
+    console.log(family[i].name + " is " + family[i].age + " years old");
+}
+
+// back to functions ... and now we pass an object to a function
+
+var ageDifference = function(person1, person2) {
+    return person1.age - person2.age;
+}
+
+var alice = new Person("Alice", 30);
+var billy = new Person("Billy", 25);
+
+// get the difference in age between alice and billy using our function
+var diff = ageDifference(alice,billy)
+
+// Make a new function, olderAge, to return the name of
+// the older of two people
+var olderAge = function(obj1, obj2){
+    if(obj1.age > obj2.age){
+        return obj1.name;
+    }
+    else {
+        return obj2.name
+    }
+}
+
+console.log("The older person is " + olderAge(alice, billy));
+
+//bringing it all together ... kind of summary
+
+//create object bob
+var bob = {
+    firstName: "Bob",
+    lastName: "Jones",
+    phoneNumber: "(650) 777-7777",
+    email: "bob.jones@example.com"
+};
+
+//create object mary another way
+var mary = new Object();
+mary.firstName = "Mary";
+mary.lastName = "Johnson";
+mary.phoneNumber = "(650) 888-8888";
+mary.email = "mary.j@example.com";
+
+//add bob and marry to an array
+var contacts = [bob, mary];
+
+//create a function that takes an array as an input and outputs firstname + lastname
+function printPerson(person) {
+    console.log(person.firstName + " " + person.lastName);
+}
+
+//create a list function that take no input
+function list() {
+	var contactsLength = contacts.length;
+	for (var i = 0; i < contactsLength; i++) {
+		printPerson(contacts[i]);
+	}
+}
+
+//Create a search function 
+
+function search(lastName){
+    var max = contacts.length;
+    for (var i = 0 ; i<max ; i++){
+        if(contacts[i].lastName === lastName){
+            printPerson(contacts[i]);
+        }
+    }
+}
+
+search("Jones")
+
+// create a custom object called add, that create a new contact
+function add(firstName, lastName, email, phoneNumber){
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.email = email;
+    this.phoneNumber = phoneNumber;
+};
+
+// use the new custom object
+var aroon = new add("Aroon","Jham","AJ@example.com","512-222-2222")
+
+//add that object to an array
+contacts.push(aroon)
+
+// list all objects in an array
+list()
+
+// every object in JavaScript comes with a method called hasOwnProperty
+console.log(mary.hasOwnProperty('firstName')) ; //should return true
+console.log(mary.hasOwnProperty('Name')) ; //should return false
+
+// we created a custom object. But want if I wanted to add a new property or method to that custom object
+// enter 'prototype' to the rescue
+
+//adding a new method to add function
+add.prototype.fullName = function(){
+	console.log(this.firstName + " " + this.lastName);
+};
+
+//adding a new property
+add.prototype.workNumber = function(wn){
+    this.workNumber = wn
+}
+
+
+aroon.workNumber("512-333-1111") //adds work number to the object
+aroon.fullName() //prints full name
+
+console.log(aroon)
+
+//lets create a new object that inherits from object 'add' with a constant email address
+
+function add2(firstName, lastName, phoneNumber){
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.email = "admin@email.com";
+    this.phoneNumber = phoneNumber;
+}
+
+add2.prototype = new add(); //this line ensures that add2, inherits from add
+
+// but all of 'this' information is public. What if we need to keep a property private
+
+function add(firstName, lastName, email, phoneNumber, salary){
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.email = email;
+    this.phoneNumber = phoneNumber;
+	var salary = salary; //keep private by using 'var' 
+};
+
+// so - how do we return this private information?
+
+function add(firstName, lastName, email, phoneNumber, salary){
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.email = email;
+    this.phoneNumber = phoneNumber;
+	var salary = salary; 
+	this.showSalary = function(){ 
+		return salary;
+	}
+};
+
+// now we get real fancy with our showSalary method.
+
+function add(firstName, lastName, email, phoneNumber, salary){
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.email = email;
+    this.phoneNumber = phoneNumber;
+	var salary = salary; 
+	this.showSalary = function(pw){ 
+		if(pw === 1234) return salary;
+		else return "wrong password";
+	};
+};
+
+//another fancy example - a cash register
+
+//first we need some employees for employee discount. lets build the employee object
+function StaffMember(name,discountPercent){
+    this.name = name;
+    this.discountPercent = discountPercent;
+}
+//lets add some employees
+var sally = new StaffMember("Sally",5);
+var bob = new StaffMember("Bob",10);
+var me = new StaffMember("AJ",20);
+
+//now lets build the cashregister object with many properties and methods
+var cashRegister = {
+    total:0,
+    lastTransactionAmount: 0,
+    add: function(itemCost){
+        this.total += (itemCost || 0);
+        this.lastTransactionAmount = itemCost;
+    },
+    scan: function(item,quantity){
+        switch (item){
+        case "eggs": this.add(0.98 * quantity); break;
+        case "milk": this.add(1.23 * quantity); break;
+        case "magazine": this.add(4.99 * quantity); break;
+        case "chocolate": this.add(0.45 * quantity); break;
+        }
+        return true;
+    },
+    voidLastTransaction : function(){
+        this.total -= this.lastTransactionAmount;
+        this.lastTransactionAmount = 0;
+    },
+    // Create a new method applyStaffDiscount here
+    applyStaffDiscount: function(employee){
+        var percent = 1 - (employee.discountPercent/100);
+        this.total = this.total*percent;
+    },
+    
+};
+
+// lets put the cash register in action
+cashRegister.scan('eggs',1);
+cashRegister.scan('milk',1);
+cashRegister.scan('magazine',3);
+// Apply your staff discount by passing the 'me' object 
+// to applyStaffDiscount
+cashRegister.applyStaffDiscount(me)
+
+// Show the total bill
+console.log('Your bill is '+cashRegister.total.toFixed(2));
