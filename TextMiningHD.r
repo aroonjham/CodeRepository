@@ -15,10 +15,9 @@ rm(data2)
 # create corpusProdDesc from product description
 library(tm)
 library(proxy)
-library(RWeka)
+library(RWeka) #needed for n-gram tokenizing
 
-
-# solution is a loop
+# the following are the steps we use in building the solution. We take this approach to overcome memory restriction of R
 # make individual vectors of search term (st), product description (pd) and product title (pt)
 # combine to a single vector
 # create a corpus
@@ -30,6 +29,7 @@ library(RWeka)
 # convert dist to matrix
 # extract the relevant items
 
+#initiate some blank vectors and a dataframe
 cp_st <- as.vector(0)
 cp_pd <- as.vector(0)
 cp_pt <- as.vector(0)
@@ -42,8 +42,9 @@ df_distances <- data.frame(st_pd_euc = double(),
 
 i = nrow(dataInt)
 
-
+# here's the loop. It will take a while to run.
 for (count in 1:i) {
+
 cp_st <- as.vector(dataInt$search_term[count])
 cp_pd <- as.vector(dataInt$product_description[count])
 cp_pt <- as.vector(dataInt$product_title[count])
@@ -99,3 +100,54 @@ df.test <- as.data.frame(df_distances[test,])
 library(nnet)
 
 mod <- multinom(relevance ~ ., df.train)
+
+# we will use a fancy prediction function http://www.r-bloggers.com/how-to-multinomial-regression-models-in-r/
+
+predictMNL <- function(model, newdata) {
+    
+    # Only works for neural network models
+    if (is.element("nnet",class(model))) {
+        # Calculate the individual and cumulative probabilities
+        probs <- predict(model,newdata,"probs")
+        cum.probs <- t(apply(probs,1,cumsum))
+        
+        # Draw random values
+        vals <- runif(nrow(newdata))
+        
+        # Join cumulative probabilities and random draws
+        tmp <- cbind(cum.probs,vals)
+        
+        # For each row, get choice index.
+        k <- ncol(probs)
+        ids <- 1 + apply(tmp,1,function(x) length(which(x[1:k] < x[k+1])))
+        
+        # Return the values
+        return(ids)
+    }
+}
+
+y2 <- predictMNL(mod,df.test)
+
+df2 <- cbind(df.test,y=y2)
+
+
+####################################
+
+convert <- function(x){
+switch(x,
+"1",
+"1.25",
+"1.33",
+"1.5",
+"1.67",
+"1.75",
+"2",
+"2.25",
+"2.33",
+"2.5",
+"2.67",
+"2.75",
+"3")
+}
+
+
