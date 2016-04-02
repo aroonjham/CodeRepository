@@ -51,6 +51,7 @@ rlmPCA <- train(solTrainXtrans, solTrainY, method = "rlm",preProcess = "pca", tr
 # PCA results in new predictors are linear combinations of the original predictors, and thus, the practical understanding of the new predictors can become murky
 
 # enter PLS. PLS iteratively seeks to find underlying, or latent, relationships among the predictors which are highly correlated with the response
+# the tuning parameter here is "how many predictors to use". Its important to scale and center predictors
 
 #step1 build model
 plsTune <- train(solTrainXtrans, solTrainY, method = "pls", tuneLength = 20, trControl = ctrl, preProc = c("center", "scale"))
@@ -339,3 +340,153 @@ cubistPred <- predict(cubistTune, solTestXtrans)
 cubistValues <- data.frame(obs = solTestY, pred = as.vector(cubistPred))
 defaultSummary(cubistValues)	
 
+################################### Classification Methods #############################
+
+# when some models are used for classification, like neural networks and partial least squares, they produce continuous predictions
+# that do not follow the definition of a probability-the predicted values are not necessarily between 0 and 1 and do not sum to 1
+# For classification models like these, a transformation must be used to coerced
+# One such method is the softmax transformation ˆpl = e^yl / (e^y1 + e^y2 + .... + e^yC)    [l is the prob of class 'l']
+# simoidal function: 1/(1+e^-z) where z is a linear function
+
+# TP (true positive): predicted event and observed event are both positive
+# FP: predicted event is positive, but observed event is negative
+# FN: predicted event is negative, but observed event is positive
+# TN: predicted event and observed event are both negative
+
+# Sensitivity = number of samples with the event and predicted to have the event/ number of samples having the event i.e. TP/P (where P = number of observed positive events)
+# Specificity = number of samples without the event and predicted as nonevents / number of samples without the event i.e. TN/N
+# TP rate = Sensitivity
+# FP rate = 1 - Specificity
+# PPV (positive predicted value) = used for rare events = TP/(TP+FP)
+# alternate expression for PPV = Sensitivity × Prevalence /((Sensitivity × Prevalence) + ((1 − Specif icity) × (1 − Prevalence)))
+
+# examples:
+# • Predict investment opportunities that maximize return
+# • Improve customer satisfaction OR Revenue by market segmentation
+# • Lower inventory costs by improving product demand forecasts or
+# • Reduce costs associated with fraudulent transactions
+
+# for this cheat sheet, we will use the caravan data.
+# Caravan data is highly imbalanced. So we will use the ROSE package for dealing with imbalance and improving our accuracy
+# for more information go to http://www.analyticsvidhya.com/blog/2016/03/practical-guide-deal-imbalanced-classification-problems/
+
+library(ROSE)
+library(pROC)
+data <- Caravan
+
+### There are a few predictors with only a single value, so we remove these first
+isZV <- apply(data, 2, function(x) length(unique(x)) == 1)
+data <- data[, !isZV]
+rm(isZV)
+
+data.x <- data[,-c(86)]
+data.y <- as.data.frame(data[,c(86)])
+
+segPP <- preProcess(data.x, method = c("YeoJohnson", "knnImpute"))
+data.x <- predict(segPP, data.x)
+
+segCorr <- cor(data.x)
+highCorr <- findCorrelation(segCorr, .85)
+data.x <- data.x[, -highCorr]
+
+#nzv <- nearZeroVar(data.x)
+data <- cbind(data.x,data.y)
+colnames(data)[colnames(data) == 'data[, c(86)]'] <- 'Purchase'
+
+set.seed(123)
+train= sample(c(TRUE,TRUE,TRUE,FALSE), nrow(data),rep=TRUE)
+test = (!train)
+data.train <- data[train,]
+data.test <- data[test,]
+
+data.rose <- ROSE(Purchase ~ ., data = data.train, seed = 1)$data
+
+ctrl <- trainControl(method = "cv", number = 10, classProbs = TRUE) 
+
+data.roseY <- data.rose$Purchase
+data.testY <- data.test$Purchase
+data.roseX <- data.rose[,-c(61)]
+data.testX <- data.test[,-c(61)]
+
+################################### Logistic Regression #############################
+
+# step1 build model
+glmTune <- train(data.roseX, data.roseY, method = "glm", trControl = ctrl)
+
+# step 2 finalize model
+glm.probs=predict(glmTune,newdata=data.test,type="prob") 
+
+# step3 evaluate model
+glm.ROCR = prediction(glm.probs$Yes, data.test$Purchase)
+glm.perfROCR = performance(glm.ROCR, "tpr", "fpr")
+plot(glm.perfROCR, colorize=TRUE)
+
+performance(glm.ROCR, "auc")@y.values
+
+
+################################### Linear Discriminant Analysis #############################
+
+# based on bayes rules
+# assumes means of the groups are unique, covariance across predictors are identical
+# optimizing function looks to maximize between group variances
+
+# step1 build model
+ldaTune <- train(data.roseX, data.roseY, method = "lda", preProc = c("center","scale"), metric = "ROC", trControl = ctrl)
+
+# step 2 finalize model
+lda.probs=predict(ldaTune,newdata=data.testX,type="prob")  # be careful not to use the full data set here
+
+# step3 evaluate model
+lda.ROCR = prediction(lda.probs$Yes, data.test$Purchase)
+lda.perfROCR = performance(lda.ROCR, "tpr", "fpr")
+plot(lda.perfROCR, colorize=TRUE)
+
+performance(lda.ROCR, "auc")@y.values
+
+################################### Partial Least Squares for classification #############################
+
+
+
+#step 0 PLS takes numeric values for response variable, so we create a numeric response variable
+data.rose$Purchase1 <- ifelse(data.rose$Purchase =="Yes",1,0)
+
+# step1 build model
+ncomp = 10
+plsTune <- plsr(Purchase1 ~ . , data = data.rose[, !names(data.rose) %in% c("Purchase")], scale = T, probMethod = "Bayes", ncomp = ncomp)
+
+# step 2 finalize model
+pls.probs=predict(plsTune,newdata=data.testX,type="response") 
+
+# step3 evaluate mode
+perf <- as.vector(0)
+for (i in 1:ncomp){
+
+pls.ROCR = prediction(pls.probs[,1,i], data.test$Purchase) # here we are evaluating the model with 4 components. To evaluate with 3 components use pls.probs[,1,3]
+pls.perfROCR = performance(pls.ROCR, "tpr", "fpr")
+plot(pls.perfROCR, colorize=TRUE)
+
+perf <- append(perf, as.vector(unlist(performance(pls.ROCR, "auc")@y.values)))
+
+}
+
+################################### Penalized Models for classification #############################
+
+# we use the glmnet package
+# If alpha=0 then a ridge regression model is fit, and if alpha=1 then a lasso model is fit
+# tune for lambda. Alpha between 0 and 1 corresponds to elasticnet
+
+# step 0: create tuning grid	
+glmnGrid <- expand.grid(.alpha = c(0, .1, .2, .4, .6, .8, 1), .lambda = seq(.01, .2, length = 20))
+
+# step1 build model
+glmnTuned <- train(data.roseX, data.roseY, method = "glmnet", tuneGrid = glmnGrid, preProc = c("center", "scale"), trControl = ctrl)
+
+# step 2 finalize model
+glm.probs=predict(glmnTuned,newdata=data.testX,type="prob")  
+
+# step3 evaluate model
+glm.ROCR = prediction(glm.probs$Yes, data.test$Purchase)
+glm.perfROCR = performance(glm.ROCR, "tpr", "fpr")
+plot(glm.perfROCR, colorize=TRUE)
+
+performance(glm.ROCR, "auc")@y.values
