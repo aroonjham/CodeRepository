@@ -1,5 +1,24 @@
 ## R model cheat-sheet
 
+require(psych)
+# require(neuralnet)
+require(MASS)
+require(ISLR)
+require(randomForest)
+require(gbm) ### for boosting
+require(boot)
+require(glmnet) ### for lasso and ridge
+require(forecast)
+require(rpart)
+require(rpart.plot)
+require(e1071)
+require(ROCR)
+require(class)#knn
+require(caret)
+require(AppliedPredictiveModeling)
+require(xgboost)
+
+
 ################################### simple linear model #############################
 library(AppliedPredictiveModeling)
 data(solubility)
@@ -490,3 +509,137 @@ glm.perfROCR = performance(glm.ROCR, "tpr", "fpr")
 plot(glm.perfROCR, colorize=TRUE)
 
 performance(glm.ROCR, "auc")@y.values
+
+### drawing a lift curve
+# first we need to relevel data.test$Purchase
+data.test$Purchase1 <- relevel(data.test$Purchase, "Yes")
+liftcurve <- lift(data.test$Purchase1 ~ glm.probs$Yes + pls.probs[,1,4])
+xyplot(liftcurve, auto.key = list(columns = 2, lines = TRUE,points = FALSE))
+
+################################### Nearest Shrunken Centroids #############################
+
+# linear classification model that is well suited for high-dimensional problems
+# If a predictor (feature) does not contain much information for a particular class, its centroid for that class is likely to be close to the overall centroid
+# feature selection takes place during the model training process
+# Centering and scaling the predictors is recommended for this model
+# tuning parameter is the shrinkage parameter, ranging from 0(implying very little shrinkage and feature selection) to a high number (where no predictors will be retained)
+
+# step 0: create tuning grid	
+nscGrid <- data.frame(.threshold = 0:25)
+
+# step1 build model
+nscTuned <- train(x = data.roseX, y = data.roseY, method = "pam", preProc = c("center", "scale"), tuneGrid = nscGrid, trControl = ctrl)
+
+# step 2 finalize model
+nsc.probs=predict(nscTuned,newdata=data.testX,type="prob")  
+
+# step3 evaluate model
+nsc.ROCR = prediction(nsc.probs$Yes, data.test$Purchase)
+nsc.perfROCR = performance(nsc.ROCR, "tpr", "fpr")
+plot(nsc.perfROCR, colorize=TRUE)
+
+performance(nsc.ROCR, "auc")@y.values
+
+# additional steps
+plot(nscTuned)
+predictors(nscTuned)
+varImp(nscTuned, scale = FALSE) # will return the variable importance based on the distance between the class centroid and the overall centroid
+
+################################### Nonlinear Discriminant Analysis #############################
+
+# LDA and QDA each minimize the total probability of misclassification assuming that the data can truly be separated by hyperplanes or quadratic surfaces
+# LDA assumes a distribution of the predictor data such that the class specific means are different (but the covariance structure is independent of the classes)
+# MDA (Mixture Discriminant Analysis) generalizes LDA in a different manner; it allows each class to be represented by multiple (tuning parameter) multivariate normal distributions. These distributions can have different means but, like LDA, the covariance structures are assumed to be the same.
+# tuning parameter for MDA is number of subclasses
+
+## mda
+# step1 build model
+mdaTuned <- train(x = data.roseX, y = data.roseY, method = "mda", tuneGrid = expand.grid(.subclasses = 1:18), trControl = ctrl)
+
+# step 2 finalize model
+mda.probs=predict(mdaTuned,newdata=data.testX,type="prob")  
+
+# step3 evaluate model
+mda.ROCR = prediction(mda.probs$Yes, data.test$Purchase)
+mda.perfROCR = performance(mda.ROCR, "tpr", "fpr")
+plot(mda.perfROCR, colorize=TRUE)
+
+performance(mda.ROCR, "auc")@y.values
+
+## rda 
+# step 0: create tuning grid	
+rdaGrid <- expand.grid(.gamma = seq(0,1,length = 20), .lambda = seq(0,1,length = 20))
+# step1 build model
+rdaTuned <- train(x = data.roseX, y = data.roseY, method = "rda", tuneGrid = rdaGrid, trControl = ctrl)
+
+# step 2 finalize model
+rda.probs=predict(rdaTuned,newdata=data.testX,type="prob")  
+
+# step3 evaluate model
+rda.ROCR = prediction(rda.probs$Yes, data.test$Purchase)
+rda.perfROCR = performance(rda.ROCR, "tpr", "fpr")
+plot(rda.perfROCR, colorize=TRUE)
+
+performance(rda.ROCR, "auc")@y.values
+
+################################### Deep Neural Net Special for classification #############################
+
+#custom function for neural net
+modelInfo <- list(label = "Stacked AutoEncoder Deep Neural Network",
+                  library = "deepnet",
+                  loop = NULL,
+                  type = c("Classification", "Regression"),
+                  parameters = data.frame(parameter = c("layer1", "layer2", "layer3", "hidden_dropout", "visible_dropout"),
+                                          class = rep("numeric", 5),
+                                          label = c("Hidden Layer 1", "Hidden Layer 2", "Hidden Layer 3", 
+                                                    "Hidden Dropouts", "Visible Dropout")),
+                  grid = function(x, y, len = NULL) {
+                    expand.grid(layer1 = 1:len, layer2 = 0:(len -1), layer3 = 0:(len -1),
+                                hidden_dropout = 0, visible_dropout = 0)
+                  },
+                  fit = function(x, y, wts, param, lev, last, classProbs, ...) {
+                    if(!is.matrix(x)) x <- as.matrix(x)
+                    is_class <- is.factor(y)
+                    if (is_class) y <- caret:::class2ind(y)
+                    layers <- c(param$layer1, param$layer2, param$layer3)
+                    layers <- layers[layers > 0]
+                    sae.dnn.train(x, y, hidden = layers, 
+                                  output = if(is_class) "sigm" else "linear",
+                                  hidden_dropout = param$hidden_dropout,
+                                  visible_dropout = param$visible_dropout,
+                                  ...)
+                  },
+                  predict = function(modelFit, newdata, submodels = NULL) {
+                    pred <- nn.predict(modelFit, as.matrix(newdata))
+                    if(ncol(pred) > 1)
+                      pred <- modelFit$obsLevels[apply(pred, 1, which.max)]
+                    pred
+                  },
+                  prob = function(modelFit, newdata, submodels = NULL) {
+                    out <- exp(nn.predict(modelFit, as.matrix(newdata)))
+                    out <- apply(out, 1, function(x) x/sum(x))
+                    t(out)
+                  },
+                  predictors = function(x, ...) {
+                    NULL
+                  },
+                  varImp = NULL,
+                  levels = function(x) x$classes,
+                  tags = c("Neural Network"),
+                  sort = function(x) x[order(x[,1]),])
+
+# step 0: create tuning grid	
+neuralGrid <- expand.grid(.layer1 = c(6:10), .layer2 = c(2:6), .layer3 = c(0:2), .hidden_dropout = 0, .visible_dropout = 0)
+
+# step1 build model
+neuralTuned <- train(x = data.roseX, y = data.roseY, method = modelInfo, preProc = c("center", "scale"),tuneGrid = neuralGrid, trControl = ctrl)
+
+# step 2 finalize model
+neural.probs=predict(neuralTuned,newdata=data.testX,type="prob")  
+
+# step3 evaluate model
+neural.ROCR = prediction(neural.probs$Yes, data.test$Purchase)
+neural.perfROCR = performance(neural.ROCR, "tpr", "fpr")
+plot(neural.perfROCR, colorize=TRUE)
+
+performance(neural.ROCR, "auc")@y.values
