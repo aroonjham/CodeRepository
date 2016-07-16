@@ -654,7 +654,49 @@ print filter(lambda x: x % 3 == 0, my_list) # notice the use of the filter() fun
 squares = [x **2 for x in range(1,11)]
 print filter(lambda i: i>=30 and i<=70, squares) # Here the function returns squares between 30 and 70
 
-#################### BITWISE OPERATORS
+###############################################################
+###															###
+###															###
+###   				Advanced Functions						###
+###															###
+###															###
+###############################################################
+
+#and introducing {0} and {1}
+
+# You would use *args when you're not sure how many arguments might be passed to your function
+def print_everything(*args):
+        for count, thing in enumerate(args):
+		print '{0}. {1}'.format(count, thing)
+
+# the text below is output		
+print_everything('apple', 'banana', 'cabbage')
+0. apple
+1. banana
+2. cabbage
+
+# **kwargs allows you to handle named arguments that you have not defined in advance
+def table_things(**kwargs):
+	for name, value in kwargs.items():
+		print '{0} = {1}'.format(name, value)
+
+# the text below is output
+table_things(apple = 'fruit', cabbage = 'vegetable')
+cabbage = vegetable
+apple = fruit
+
+# Create a helper function to call a function repeatedly
+def repeat(times, func, *args, **kwargs):
+    for _ in xrange(times):
+        yield func(*args, **kwargs)
+
+###############################################################
+###															###
+###															###
+###   				Bitwise Operators						###
+###															###
+###															###
+###############################################################
 
 #The bin() function. bin() takes an integer as input and returns the binary representation of that integer in a string
 print bin(1)
@@ -717,7 +759,13 @@ def flip_bit(number, n):
     result = number ^ mask
     return bin(result)
 
-#################### CLASS
+###############################################################
+###															###
+###															###
+###   						CLASSES							###
+###															###
+###															###
+###############################################################
 
 # Example of class
 
@@ -912,6 +960,35 @@ class Fraction:
          secondnum = other.num * self.den
 
          return firstnum == secondnum
+		 
+## more on class ... coordinate geometry
+
+class Coordinate(object):
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+
+    def getX(self):
+        # Getter method for a Coordinate object's x coordinate.
+        # Getter methods are better practice than just accessing an attribute directly
+        return self.x
+
+    def getY(self):
+        # Getter method for a Coordinate object's y coordinate
+        return self.y
+
+    def __str__(self):
+        return '<' + str(self.getX()) + ',' + str(self.getY()) + '>'
+
+    def __eq__(self, other):
+		# method that returns True if coordinates refer to same point in the plane (i.e., have the same x and y coordinate)
+        # First make sure `other` is of the same type 
+        assert type(other) == type(self)
+        # Since `other` is the same type, test if coordinates are equal
+        return self.getX() == other.getX() and self.getY() == other.getY()
+
+    def __repr__(self):
+        return 'Coordinate(' + str(self.getX()) + ', ' + str(self.getY()) + ')'
 
 #################### PYTHON FILE I/O 
 
@@ -1018,7 +1095,13 @@ def gcd(m,n):
     return n
 	
 
-#################### Regular expressions
+###############################################################
+###															###
+###															###
+###   				Regular expressions						###
+###															###
+###															###
+###############################################################
 
 import re
 
@@ -1055,5 +1138,53 @@ print match.group(1) # the (...) helps match regular expressions in group to fac
 
 
 print re.findall('[([\w:/]+\s[+\-]\d{4})\]' ,'- - [01/Aug/1995:00:00:01 -0400')
+
+
+
+
+###############################################################
+###															###
+###															###
+###   				Creating fake data						###
+###															###
+###															###
+###############################################################
+
+from faker import Factory
+fake = Factory.create()
+fake.seed(4321)
+
+print dir(fake) # gives you all the attributes of fake
+# for example:
+for _ in range(0,10):
+  print fake.military_state()
+ 
+for _ in range(0,10):
+  print fake.name()
+
+# creating lots of fake data
+email = []
+for _ in range(0,10):
+  email.append(fake.email())
+
+datetime = []
+for _ in range(0,10):
+  datetime.append(fake.date_time())
+
+address = []
+for _ in range(0,10):
+  address.append(fake.address())
+ 
+city = []
+for _ in range(0,10):
+  city.append(fake.city())
+  
+state = []
+for _ in range(0,10):
+  state.append(fake.state())
+  
+mylist = [list(a) for a in zip(email, datetime, address, city, state)]
+
+
 
 

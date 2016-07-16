@@ -27,7 +27,15 @@ r_stats_text_corpus <- tm_map(r_stats_text_corpus, removeWords, c(rem, stopwords
 wordcloud(r_stats_text_corpus,min.freq=2,max.words=100)
 
 
-################## The following code is for kaggle competion What's cooking
+###############################################################
+###															###
+###															###
+###The following code is for kaggle competion What's cooking###
+###															###
+###															###
+###############################################################
+
+################## 
 
 setwd("C:/Users/Aroon/Documents/Kaggle/Whats_Cooking")
 
@@ -186,6 +194,28 @@ CompleteDf = merge(Totaldf, Correctdf, all.x = TRUE)
 
 CompleteDf$accuracy <- CompleteDf$correct_count/CompleteDf$Total_count
 
+#### very cool way of replacing words in a large string. Something extra for text mining
+
+x <- "I´m performing a sentiment analysis project. At this moment, I need to filter my database with several stopwords. The tm package has the function to do this, but I have to turn a list or data frame of words into a corpus object., and I don´t want to do this."
+
+stopwords <- c("I", "to", "the", "a", "with", "object", "do", "or", "of", "my", "this", "in", "into")
+
+# "\<" is another escape sequence for the beginning of a word, and "\>" is the end
+
+stopwords <- paste0("\\<", stopwords, "\\>")
+
+# | means or
+
+gsub(paste(stopwords, collapse = "|"), "", x, ignore.case = TRUE)
+
+###############################################################
+###															###
+###															###
+###   						Forecasting						###
+###															###
+###															###
+###############################################################
+
 ####################### some notes on forecast ##################
 
 data.train <- as.ts(data.train$Units)
@@ -200,6 +230,15 @@ f.acc <- accuracy(f.cast, data.test$Units)
 f.model.auto <- auto.arima(data.train, stepwise = F, approximation = F)
 f.cast.auto <- forecast(f.model.auto, h = 100)
 f.acc.auto <- accuracy(f.cast.auto, data.test$Units)
+
+###############################################################
+###															###
+###															###
+###   					Widening the data					###
+###															###
+###															###
+###############################################################
+
 
 ####################### some notes on widening the data ##################
 

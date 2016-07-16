@@ -1,6 +1,78 @@
 # go to https://spark.apache.org/docs/1.1.1/api/python/pyspark.rdd.RDD-class.html for understanding all Spark transformations and actions
 # go to http://spark.apache.org/docs/latest/programming-guide.html for additional data
 
+
+###############################################################
+###															###
+###															###
+###   					BASICS OF AN RDD					###
+###															###
+###															###
+###############################################################
+
+# creating an RDD:
+wordsList = ['cat', 'elephant', 'rat', 'rat', 'cat']
+wordsRDD = sc.parallelize(wordsList, 4)
+
+# getting an RDD from a txt file
+import os.path
+fileName = "dbfs:/" + os.path.join('databricks-datasets', 'cs100', 'lab1', 'data-001', 'shakespeare.txt')
+
+shakespeareRDD = sc.textFile(fileName, 8).map(removePunctuation) # the key take away here is that we use the SparkContext.textFile() method. optionally, you may apply map to the data extract
+print '\n'.join(shakespeareRDD
+                .zipWithIndex()  # to (line, lineNum)
+                .map(lambda (l, num): '{0}: {1}'.format(num, l))  # to 'lineNum: line'
+                .take(15))
+
+
+# Applying a function to an RDD
+def myfunction:
+	'''some function'''
+
+newRDD = myRDD.map(myfunction)
+
+# groupByKey() 
+'''
+the groupByKey() TRANSFORMATION groups all the elements of the RDD with the same key into a single list in one of the partitions
+groupByKey should be avoided because
+1 - The operation requires a lot of data movement to move all the values into the appropriate partitions
+2 - Large lists can exhaust memory
+'''
+wordPairs = [('cat', 1), ('elephant', 1), ('rat', 1), ('rat', 1), ('cat', 1)]
+wordsGrouped = wordPairs.groupByKey()
+for key, value in wordsGrouped.collect():
+    print '{0}: {1}'.format(key, list(value))
+''' the above for loop returns
+rat: [1, 1]
+elephant: [1]
+cat: [1, 1]
+'''
+
+# reduceByKey()
+'''
+The reduceByKey() TRANSFORMATION gathers together pairs that have the same key and applies the function provided to two values at a time
+, iteratively reducing all of the values to a single value
+reduceByKey() operates by applying the function first within each partition on a per-key basis and then across the partitions, allowing it to scale efficiently to large datasets.
+'''
+wordPairs = [('cat', 1), ('elephant', 1), ('rat', 1), ('rat', 1), ('cat', 1)]
+wordCounts = wordPairs.reduceByKey(lambda x,y: x+y) # Note that reduceByKey takes in a function that accepts two values and returns a single value
+
+# reduce()
+# In the example below, we use a reduce() action to sum the counts in wordCounts
+wordCounts = [('rat', 2), ('elephant', 1), ('cat', 2)]
+from operator import add
+totalCount = (wordCounts
+              .map(lambda (x,y): y)
+              .reduce(lambda x,y: x+y)) # reduce takes in a list of values and not a key value pair like reduceByKey()
+			  
+# filter()
+# the following example exaplains filter TRANSFORMATION
+
+shakeWordsRDD = shakespeareWordsRDD.filter(lambda x: x<>'') # <> not equal to
+shakeWordCount = shakeWordsRDD.count()
+
+#####################################################
+
 import re
 import datetime
 
